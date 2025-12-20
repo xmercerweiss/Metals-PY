@@ -18,8 +18,9 @@ DWT_SYM = "dwt"
 OZ_SYM = "oz"
 
 BANNER_EXT = 0
-HEADER = f"{'METAL':<10} {'PRICE':>9} {'METAL/GOLD':>11}"
-BANNER = "*" * (len(HEADER) + BANNER_EXT)
+PRICE_HEADER = f"{'METAL':<10} {'PRICE':>9} {'METAL/GOLD':>11}"
+PORTFOLIO_HEADER = f"{'METAL':<10} {'WEIGHT':<9} {'VALUE':>11}"
+BANNER = "*" * (len(PRICE_HEADER) + BANNER_EXT)
 PRICE_FMT = "{:<10} ${:8.2f} {:11.2f}"
 PORTFOLIO_FMT = "{:<10} {:<11} ${:8.2f}"
 
@@ -33,11 +34,11 @@ def main():
     prices = collect_prices(data)
     display_prices(prices)
     if (len(sys.argv) > 1):
-        #try:
-        portfolio = collect_portfolio(sys.argv[1])
-        display_portfolio(prices, portfolio)
-        #except:
-         #   print(FILE_ERR_MSG)
+        try:
+            portfolio = collect_portfolio(sys.argv[1])
+            display_portfolio(prices, portfolio)
+        except:
+            print(FILE_ERR_MSG)
 
 
 def error(*args, **kwargs):
@@ -49,8 +50,8 @@ def collect_portfolio(path):
     out = {}
     with open(path, "r") as file:
         for line in file.readlines():
-            name, value = line.lower().strip().split(CONF_SEP)
-            out[name] = int(value)
+            name, weight = line.lower().strip().split(CONF_SEP)
+            out[name] = int(weight)
     return out
 
 
@@ -70,17 +71,19 @@ def display_portfolio(prices, portfolio):
     total_value = 0
     total_weight = 0
     print(BANNER)
-    for name, value in portfolio.items():
-        if name in prices and value > 0:
+    print(PORTFOLIO_HEADER)
+    for name, weight in portfolio.items():
+        if name in prices and weight > 0:
             price = prices[name]
-            total_weight += value
-            dollar_value = (price * value) / 2000
-            total_value += dollar_value
+            total_weight += weight
+            value = (price * weight) / 2000
+            total_value += value
             print(PORTFOLIO_FMT.format(
                 name.title(),
-                render_pennyweight(value),
-                dollar_value
+                render_pennyweight(weight),
+                value
             ))
+    print(BANNER)
     print(PORTFOLIO_FMT.format(
         "Total",
         render_pennyweight(total_weight),
@@ -90,7 +93,7 @@ def display_portfolio(prices, portfolio):
 
 def display_prices(prices):
     au_price = prices[AU_NAME]
-    print(HEADER)
+    print(PRICE_HEADER)
     for name, price in prices.items():
         print(PRICE_FMT.format(
             name.title(),
