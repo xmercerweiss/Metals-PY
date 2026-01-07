@@ -14,12 +14,14 @@ BID_KEY = "lastBid"
 PRICE_KEY = "bidVal"
 CONF_SEP = "="
 AU_NAME = "gold"
+USD_NAME = "dollars"
+COMMENT_SYM = "#"
 DWT_SYM = "dwt"
 OZ_SYM = "oz"
 
 BANNER_EXT = 0
 PRICE_HEADER = f"{'METAL':<10} {'PRICE':>9} {'METAL/GOLD':>11}"
-PORTFOLIO_HEADER = f"{'METAL':<10} {'WEIGHT':<9} {'VALUE':>11}"
+PORTFOLIO_HEADER = f"{'CURRENCY':<10} {'WEIGHT':<9} {'VALUE':>11}"
 BANNER = "*" * (len(PRICE_HEADER) + BANNER_EXT)
 PRICE_FMT = "{:<10} ${:8.2f} {:11.2f}"
 PORTFOLIO_FMT = "{:<10} {:<11} ${:8.2f}"
@@ -50,8 +52,9 @@ def collect_portfolio(path):
     out = {}
     with open(path, "r") as file:
         for line in file.readlines():
-            name, weight = line.lower().strip().split(CONF_SEP)
-            out[name] = int(weight)
+            if len(line.strip()) > 0 and not line.startswith(COMMENT_SYM):
+                name, weight = line.lower().strip().split(CONF_SEP)
+                out[name] = int(weight)
     return out
 
 
@@ -73,7 +76,16 @@ def display_portfolio(prices, portfolio):
     print(BANNER)
     print(PORTFOLIO_HEADER)
     for name, weight in portfolio.items():
-        if name in prices and weight > 0:
+        if weight <= 0:
+            continue
+        elif name == USD_NAME:
+            total_value += weight
+            print(PORTFOLIO_FMT.format(
+                name.title(),
+                "N/A",
+                weight
+            ))
+        elif name in prices:
             price = prices[name]
             total_weight += weight
             value = (price * weight) / 2000
